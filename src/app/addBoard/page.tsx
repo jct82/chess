@@ -361,12 +361,21 @@ export default function AddUser() {
             currentPiecesArray[lastPosDown[1]][lastPosDown[0]] = ' ';
             setPiecesArray(currentPiecesArray);
 
+            //remove threat if threat piece eaten
+            currentThreats.find((th, idx) => {
+                if (th.pos.join() === [currentPosUp[1],currentPosUp[0]].join()) {
+                    currentThreats.splice(idx, 1);
+                    return th;
+                }
+            });
+
             const piece = currentPiecesArray[currentPosUp[1]][currentPosUp[0]];
             const color = piece === piece.toUpperCase() ? true: false;
 
             if (checkCheck()) currentCheck = true;
             if (moveFullfillThreat(lastPosDown[1], lastPosDown[0], !color, true)) currentCheck = true;
 
+            // Collect all adversary pieces by position 
             let campPieces: Array<number[]> = [];
             currentPiecesArray.forEach((arr, idx) => {
                 for (const [id, pos] of arr.entries()) {
