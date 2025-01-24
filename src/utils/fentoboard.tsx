@@ -1,3 +1,29 @@
+import { game } from './Models';
+
+let gameMap: game = toBoard('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
+
+/**
+ * Squares contain space if empty or letter corresponding to piece type.
+ * Uppercase for White, lowercase for black
+ * @returns chessboard squares array of string
+ */
+export function getGame() {
+	return gameMap;
+}
+
+/**
+ * Update squares array game
+ * @param game new chessboard squares array of string
+ */
+export function setGame(game: game) {
+	gameMap = game.map(line => [...line.map(square => square.slice())]);
+}
+
+/**
+ * Convert chess game from fen string to array characters array
+ * @param fen string of characters corresponding to chessgame map
+ * @returns squares array of string characters corresponding to chessgame map
+ */
 export function toBoard(fen:string) {
 	let lines:string[] = fen.split('/');
 	let lastLine:string = lines[lines.length - 1];
@@ -16,7 +42,12 @@ export function toBoard(fen:string) {
 	return chessBoard;
 }
 
-function addEmptySquare (ch:string) {
+/**
+ * convert empty squares in space characters
+ * @param ch string character
+ * @returns array of space character
+ */
+function addEmptySquare(ch:string) {
 	let charArray = [];
 	let loop = Number(ch);
 	while (loop > 0) {
@@ -26,12 +57,21 @@ function addEmptySquare (ch:string) {
 	return charArray;
 }
 
+/**
+ * Convert chess game from array characters array to fen string
+ * @param chessBoard array string characters array
+ */
 export function toFen(chessBoard:Array<string[]>) {
 	 const fenLines = chessBoard.map(line => parseFen(line));
 	 const fenBoard = fenLines.join('/');
-	// return fenBoard;
+	return fenBoard;
 }
 
+/**
+ * Convert characters array corresponding to chessbord line of squares
+ * @param boardLine string characters array
+ * @returns fen string part corresponding to chessbord line of squares
+ */
 function parseFen(boardLine: string[]) {
 	let fenString = '';
 	let nbr = 0;

@@ -1,7 +1,7 @@
 'use client'
 import { useRef, useEffect, useState } from 'react';
 import { connectToDB } from '@/lib/mongo';
-import { toBoard } from '@/components/fentoboard';
+import { toBoard } from '@/utils/fentoboard';
 
 interface piecePos {
     y: number;
@@ -568,7 +568,7 @@ export default function AddUser() {
         return false;
     }
 
-    // Is knight put in check
+    // Is king is threat in is axis by presence of enemy (rook, bishop, queen)
     const checkKingChess = (color: boolean) => {
         const king = color ? 'K' : 'k';
         const piecesType = color ? ['r', 'b', 'q'] : ['R', 'B', 'Q'];

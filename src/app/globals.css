@@ -144,3 +144,15 @@ body {
 .square.P{
   background-image: url('/chess_pieces/pawn_white.png');
 }
+
+.mat {
+  position: absolute;
+  top: 50%;
+  width: 100%;
+  font-size: 20px;
+  font-weight: bold;
+  text-align: center;
+  color: red;
+  z-index: 10;
+  transform: translateY(-50%);
+}

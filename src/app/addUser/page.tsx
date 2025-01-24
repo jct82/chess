@@ -1,5 +1,5 @@
 import { connectToDB } from '@/lib/mongo';
-import { toBoard } from '@/fentoboard';
+import { toBoard } from '@/utils/fentoboard';
 
 export default function AddUser() {
     async function onSubmit(formData: FormData) {
