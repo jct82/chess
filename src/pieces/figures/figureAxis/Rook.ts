@@ -9,7 +9,6 @@ import FigureAxis from './FigureAxis';
  export default class Rook extends FigureAxis {
 	constructor(pos: PiecePos, isWhite: boolean) {
 		super(pos, isWhite);
-		super.allowedSquares;
 	}
 
 	/**

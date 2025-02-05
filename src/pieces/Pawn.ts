@@ -8,7 +8,6 @@ import Piece from './Piece';
  export default class Pawn extends Piece {
 	constructor(pos: PiecePos, isWhite: boolean) {
 		super(pos, isWhite);
-		super.allowedSquares;
 	}
 
 	/**

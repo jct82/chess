@@ -7,7 +7,6 @@ import Figure from '../Figure';
  export default abstract class FigureAxis extends Figure {
 	constructor(pos: PiecePos, isWhite: boolean) {
 		super(pos, isWhite);
-		super.allowedSquares;
 	}
 
 	/**

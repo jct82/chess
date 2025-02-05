@@ -1,5 +1,7 @@
 'use client'
 import { useRef, useEffect, useState } from 'react';
+
+import { Threat } from '@/utils/Models';
 import { getGame, setGame } from '@/utils/fentoboard';
 
 import Piece from '@/pieces/Piece';
@@ -11,9 +13,8 @@ import Rook from '@/pieces/figures/figureAxis/Rook';
 import Pawn from '@/pieces/Pawn';
 
 import ChessBoard from '@/components/ChessBoard';
-import { JSX } from 'react/jsx-runtime';
 
-export default function AddUser() {
+export default function AddBoard() {
     const boardRef: any = useRef(null);
 
     let [piecesArray, setPiecesArray] = useState<Array<string[]>>(getGame());
@@ -23,9 +24,9 @@ export default function AddUser() {
     let [playerWhite, setPlayerWhite] = useState<Piece[]>([]);
     let [playerBlack, setPlayerBlack] = useState<Piece[]>([]);
     let [selected, setSelected] = useState<Piece>({} as Piece);
+    let clickedPiece = selected;
     let [mat, setMat] = useState<boolean>(false);
     let [pat, setPat] = useState<boolean>(false);
-    let clickedPiece = selected;
     
     let [clickedInBoard, setClickedInBoard] = useState<boolean>(false);
 
@@ -104,9 +105,9 @@ export default function AddUser() {
      */
 	const checkPosDown = (e: MouseEvent) => {
         currentPosDown = [Math.floor(e.clientX / unit), Math.floor(e.clientY / unit)]
+        if (!checkPieceMoves()) return;
 		setLastPosDown(currentPosDown);
         setClickedInBoard(true);
-        checkPieceMoves();
 	}
 
     /**
@@ -129,10 +130,10 @@ export default function AddUser() {
      * Transcript pieces position on board with allowed square moves of selected piece
      * @returns JSX of positioned pieces on board
      */
-    const designMoves = () : JSX.IntrinsicElements => {
+    const designMoves = () => {
         let orderedOptions = clickedPiece.allowedSquares.sort((a, b) => (a.y - b.y ||  a.x - b.x));
         let optionsId = 0;
-        return currentPiecesArray.map( (line, idxY) => {
+        return currentPiecesArray.map((line, idxY) => {
             let playableY = orderedOptions[optionsId]?.y === idxY ? true : false;
             return (
             <div key={idxY} className="pieces-line line">
@@ -142,7 +143,7 @@ export default function AddUser() {
                         optionsId++;
                         playableY = orderedOptions[optionsId]?.y === idxY ? true : false
                     }
-                    return (<div className={`${square} ${playable ? 'point' : ''} square`}></div>)
+                    return (<div key={idxX} className={`${square} ${playable ? 'point' : ''} square`}></div>)
                 })}
             </div>)}
         )
@@ -153,9 +154,9 @@ export default function AddUser() {
      * @returns JSX of positioned pieces on board
      */
     const designPieces = () => {
-        return currentPiecesArray.map( line => (
-            <div className="pieces-line line">
-                {line.map(square => (<div className={`${square} square`}></div>))}
+        return currentPiecesArray.map( (line, id) => (
+            <div key={`line${id}`} className="pieces-line line">
+                {line.map((square, ids) => (<div  key={`square${ids}`} className={`${square} square`}></div>))}
             </div>)
         )
     }
@@ -164,14 +165,15 @@ export default function AddUser() {
 
     /**
      * Get clicked piece on board if it's color turn
-     * @returns nothing
+     * @returns boolean = true if valid click on allowed piece
      */
     const checkPieceMoves = () => {
         let currentPlayer: Piece[] = whitePlayin ? playerWhite : playerBlack;
         clickedPiece = currentPlayer.find(p => `${p.pos.y}${p.pos.x}` === `${currentPosDown[1]}${currentPosDown[0]}`)!;
-        if (!clickedPiece) return;
+        if (!clickedPiece) return false;
         setSelected(clickedPiece);
         setChessPieces(designMoves());
+        return true;
     }
 
     /**
@@ -182,12 +184,12 @@ export default function AddUser() {
     const isMat = (king: King, player: Piece[]) => {
         let allowedToMove = false;
         king.chess = true;
-        // faire opposition
+        // oppose piece between
         let chessWays = king.threats.filter(th => th.fulfilled === true);
         if (chessWays.length <= 1) {
             let chessWay = [...chessWays[0].axis.map(pos => pos.join('')), chessWays[0].pos.join('')];
             for (const [idx,pl] of player.entries()) {
-                if (pl instanceof King || king.fulfillThreat({y:pl.pos.y, x:pl.pos.x})) continue;
+                if (pl instanceof King || king.fulfillThreat({y:pl.pos.y, x:pl.pos.x}, true)) continue;
                 pl.checkMove();
                 player[idx].allowedSquares = pl.allowedSquares.filter(pos => chessWay.indexOf(`${pos.y}${pos.x}`) >= 0);
                 if (player[idx].allowedSquares.length > 0) allowedToMove = true;
@@ -205,11 +207,25 @@ export default function AddUser() {
     const isPat = (king: King, player: Piece[]) => {
         let allowedToMove = false;
         for (const [idx,pl] of player.entries()) {
-            if (!(pl instanceof King) && king.fulfillThreat({y:pl.pos.y, x:pl.pos.x})) continue;
             pl.checkMove();
+            updateShieldPiece(king, pl);
             if (player[idx].allowedSquares.length > 0) allowedToMove = true;
         }
         if (!allowedToMove) setPat(true);
+    }
+
+    /**
+     * If this piece oppose check on own king, update its allowed moves
+     * @param king own king
+     * @param piece shield piece
+     * @returns nothing
+     */
+    const updateShieldPiece = (king: King, piece: Piece) => {
+        if (piece instanceof King) return;
+        const currentThreat = king.fulfillThreat({y:piece.pos.y, x:piece.pos.x}, true) as Threat;
+        if (!currentThreat) return;
+        let threatPos: Array<string> = [...currentThreat.axis, currentThreat.pos].map(sq => sq.join(''));
+        piece.allowedSquares = piece.allowedSquares.filter(sq => threatPos.indexOf(`${sq.y}${sq.x}`) >= 0);
     }
 
     /**
@@ -227,8 +243,8 @@ export default function AddUser() {
             const king: King = adversaryPlayer.find(p => p instanceof King) as King;
             // If was in chess, cancel chess
             if (myKing.chess) myKing.chess = !myKing.chess;
-            // If chess threat piece moves remove corresponding chess threat
-            king.removeThreat(currentPiecesArray[prevY][prevY].toUpperCase(), {y: prevY, x: prevX});
+            // If chess threat piece moves, remove corresponding chess threat
+            king.removeThreat(currentPiecesArray[prevY][prevX].toUpperCase(), {y: prevY, x: prevX});
             // Remove eaten piece and corresponding chess threat
             adversaryPlayer.find((p, idx) => {
                 if (`${p.pos.y}${p.pos.x}` === `${newY}${newX}`) {
@@ -237,6 +253,8 @@ export default function AddUser() {
                     return p;
                 }
             }); 
+            // Does piece's move fulfills check threat of another piece ?
+            const threatFulfilled = king.fulfillThreat({y:prevY, x: prevX});
             // Update positions array
             currentPiecesArray[newY][newX] = currentPiecesArray[selected.pos.y][selected.pos.x];
             currentPiecesArray[prevY][prevX] = ' ';
@@ -251,8 +269,6 @@ export default function AddUser() {
             });
 
             if (selected instanceof King) selected.checkChess({y:newY, x:newX});
-
-            const threatFulfilled = king.fulfillThreat({y:prevY, x: prevX}, false);
             const isChess = king.checkChess({y:newY, x:newX});
             (threatFulfilled || isChess) ? isMat(king, adversaryPlayer) : isPat(king, adversaryPlayer);
             setWhitePlayin(!whitePlayin);
@@ -261,7 +277,7 @@ export default function AddUser() {
     }
     
     return(
-        <div ref={boardRef} className='chess-page'>
+        <div ref={boardRef} data-testid="chess-board" className='chess-page'>
             <ChessBoard/>
             <div className='pieces-board board'>
                 {chessPieces}

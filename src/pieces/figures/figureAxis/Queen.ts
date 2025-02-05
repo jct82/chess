@@ -9,7 +9,6 @@ import FigureAxis from './FigureAxis';
  export default class Queen extends FigureAxis {
 	constructor(pos: PiecePos, isWhite: boolean) {
 		super(pos, isWhite);
-		super.allowedSquares;
 	}
 
 	/**

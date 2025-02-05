@@ -11,7 +11,6 @@ export default class King extends FigureAxis {
 	chess: boolean;
 	constructor(pos: PiecePos, isWhite: boolean, chess: boolean = false) {
 		super(pos, isWhite);
-		super.allowedSquares;
 		this.threats = [];
 		this.chess = chess;
 	}
@@ -176,10 +175,11 @@ export default class King extends FigureAxis {
 
 	/**
 	 * Check if moved piece was on king threat axis, then check if its move has revealed check on king 
-	 * @param pos piece position between kung and threat piece
-	 * @returns boolean revealed checked or not
+	 * @param pos piece position between king and threat piece
+	 * @param toCheck check for potential piece allowed moves or if current move provoked chess ?
+	 * @returns boolean revealed checked after piece move (tocheck false) or threat if piece can't move beacause protects king (tocheck true)
 	 */
-	fulfillThreat = ({y, x}: PiecePos) => {
+	fulfillThreat = ({y, x}: PiecePos, toCheck: boolean = false) => {
 		if (this.threats.length === 0) return false;
 		// check if piece about to move is on one of threats axis
 		const currentThreats = this.threats.filter(th => th.axis.map(sq => sq.join('')).indexOf(`${y}${x}`) >= 0);
@@ -187,8 +187,8 @@ export default class King extends FigureAxis {
 		const game: game = getGame();
 		for (const th of currentThreats) {
 			if (th.axis.map(sq => game[sq[0]][sq[1]]).filter(sq => sq !== ' ').length === 1) {
-				th.fulfilled = true;
-				return true;
+				if (!toCheck) th.fulfilled = true;
+				return toCheck ? th : th.fulfilled;
 			}
 		}
 		return false;

@@ -8,7 +8,6 @@ import Figure from './Figure';
  export default class Knight extends Figure {
 	constructor(pos: PiecePos, isWhite: boolean) {
 		super(pos, isWhite);
-		super.allowedSquares;
 	}
 
 	/**
