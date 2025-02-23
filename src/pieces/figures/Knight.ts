@@ -1,5 +1,4 @@
-import { getGame } from '@/utils/fentoboard';
-import { PiecePos, game } from '../../utils/Models';
+import { PiecePos } from '../../utils/Models';
 import Figure from './Figure';
 /**
  * @param{PiecePos} pos - 

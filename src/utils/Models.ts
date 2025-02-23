@@ -15,4 +15,12 @@ export interface Threat {
     fulfilled: boolean      // is king in chess
 }
 
+/**
+ * Is en passant move is possible ? On which pawn ?
+ */
+ export interface EnPassant {
+    is: boolean,
+    pos: PiecePos          // position of pawn threaten by en passant move
+}
+
 export type game = Array<string[]>;

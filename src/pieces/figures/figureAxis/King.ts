@@ -1,5 +1,5 @@
-import { getGame } from '@/utils/fentoboard';
-import { PiecePos, Threat, game } from '../../../utils/Models';
+import { getGame } from '@/utils/globals';
+import { PiecePos, Threat, game } from '@/utils/Models';
 import FigureAxis from './FigureAxis';
 /**
  * @param{PiecePos} pos - 
@@ -9,10 +9,12 @@ import FigureAxis from './FigureAxis';
 export default class King extends FigureAxis {
 	threats: Threat[];
 	chess: boolean;
-	constructor(pos: PiecePos, isWhite: boolean, chess: boolean = false) {
+	castling: PiecePos[];
+	constructor(pos: PiecePos, isWhite: boolean, chess: boolean = false, castling: PiecePos[] = [{y:pos.y, x: 0}, {y:pos.y, x: 7}]) {
 		super(pos, isWhite);
 		this.threats = [];
 		this.chess = chess;
+		this.castling = castling;
 	}
 
 	/**
@@ -39,7 +41,37 @@ export default class King extends FigureAxis {
             ) continue;
             this.allowedSquares.push(km);
         }
+		!this.chess && this.allowedSquares.push(...this.castle(game));
     }
+
+	/**
+	 * Check if king can castle than update its allowed position moves
+	 * @param game the game pieces map on chess board
+	 * @returns allowed positions of castle
+	 */
+	castle = (game: game) => {
+		let castleSquares: PiecePos[] = [];
+		for (let t of this.castling) {
+			const diff = Math.abs(this.pos.x - t.x) - 1;
+			const asc = this.pos.x < t.x;
+			const line = game[this.pos.y];
+			const posLine = line.map((_, id) => ({y: this.pos.y, x: id}));
+			const fs = asc ? 
+			posLine.filter((_, id) => (id > this.pos.x && id < t.x && line[id] === ' ')) :
+			posLine.filter((_, id) => (id < this.pos.x && id > t.x && line[id] === ' '));
+			if (fs.length !== diff) continue;
+			const freeChecked = fs.find(s => (
+				this.rookChess(this.isWhite ? 'r' : 'R', s, true) ||
+				this.rookChess(this.isWhite ? 'q' : 'Q', s, true) ||
+				this.knightChess(s) ||
+				this.bishopChess(this.isWhite ? 'b' : 'B', s, true) ||
+				this.bishopChess(this.isWhite ? 'q' : 'Q', s, true) ||
+				this.pawnChess(s)
+			));
+			if (!!!freeChecked) castleSquares.push({y: this.pos.y, x: this.pos.x + (asc ? 2 : -2)});
+		};
+		return castleSquares;
+	}
 
 	/**
 	 * Check if piece move checked king
@@ -54,7 +86,7 @@ export default class King extends FigureAxis {
         if (pieceType === 'B') return this.bishopChess(this.isWhite ? 'b' : 'B');
         if (pieceType === 'Q') return (this.bishopChess(this.isWhite ? 'q' : 'Q') || this.rookChess(this.isWhite ? 'q' : 'Q'));
         if (pieceType === 'P') return this.pawnChess();
-        if (pieceType === 'K') this.kingChess(pos);
+        if (pieceType === 'K') this.kingChess();
 		return false;
 	}
 
@@ -67,8 +99,8 @@ export default class King extends FigureAxis {
 		const game: game = getGame();
         const dir = this.isWhite ? -1 : 1;
 		const piece = this.isWhite ? 'p' : 'P';
-		if (this.getSquare({y:y + dir, x:x - 1}) === piece) return true;
-		if (this.getSquare({y:y + dir, x:x + 1}) === piece) return true;
+		if (this.getSquare({y:y + dir, x:x - 1}) === piece) return this.addDirectThreat([y + dir, x - 1]);
+		if (this.getSquare({y:y + dir, x:x + 1}) === piece) return this.addDirectThreat([y + dir, x + 1]);
         return false
     }
 
@@ -80,14 +112,14 @@ export default class King extends FigureAxis {
 	knightChess = ({y, x} :PiecePos = {y: this.pos.y, x: this.pos.x}) => {
 		const game: game = getGame();
 		const piece = this.isWhite ? 'n' : 'N';
-		if (this.getSquare({y:y - 1, x:x - 2}) === piece) return true;
-		if (this.getSquare({y:y - 2, x:x - 2}) === piece) return true;
-		if (this.getSquare({y:y - 2, x:x + 1}) === piece) return true;
-		if (this.getSquare({y:y - 1, x:x + 2}) === piece) return true;
-		if (this.getSquare({y:y + 1, x:x + 2}) === piece) return true;
-		if (this.getSquare({y:y + 2, x:x + 1}) === piece) return true;
-		if (this.getSquare({y:y + 2, x:x - 1}) === piece) return true;
-		if (this.getSquare({y:y + 1, x:x - 2}) === piece) return true;
+		if (this.getSquare({y:y - 1, x:x - 2}) === piece) return this.addDirectThreat([y - 1, x - 2]);
+		if (this.getSquare({y:y - 2, x:x - 2}) === piece) return this.addDirectThreat([y - 2, x - 2]);
+		if (this.getSquare({y:y - 2, x:x + 1}) === piece) return this.addDirectThreat([y - 2, x + 1]);
+		if (this.getSquare({y:y - 1, x:x + 2}) === piece) return this.addDirectThreat([y - 1, x + 2]);
+		if (this.getSquare({y:y + 1, x:x + 2}) === piece) return this.addDirectThreat([y + 1, x + 2]);
+		if (this.getSquare({y:y + 2, x:x + 1}) === piece) return this.addDirectThreat([y + 2, x + 1]);
+		if (this.getSquare({y:y + 2, x:x - 1}) === piece) return this.addDirectThreat([y + 2, x - 1]);
+		if (this.getSquare({y:y + 1, x:x - 2}) === piece) return this.addDirectThreat([y + 1, x - 2]);
         return false;
     }
 
@@ -154,23 +186,32 @@ export default class King extends FigureAxis {
 	scanAxis = (squares: Array<number[]>, pieceIdx: number, {y, x}: PiecePos, game: game, toCheck:boolean = false) => {
 		let targetIdx = squares.map(sq => sq.join('')).indexOf(`${y}${x}`);
 		let range: Array<number[]> = targetIdx > pieceIdx ?
-									squares.filter((sq, idx) => idx >= pieceIdx && idx < targetIdx) :
-									squares.filter((sq, idx) => idx > targetIdx && idx <= pieceIdx);
-		let isChess = (range.filter(sq => game[sq[0]][sq[1]] !== ' ').length === 1) ? true : false;
+									squares.filter((_, idx) => idx >= pieceIdx && idx < targetIdx) :
+									squares.filter((_, idx) => idx > targetIdx && idx <= pieceIdx);
+		let king = this.isWhite ? 'K' : 'k';
+		let isChess = (range.filter(sq => game[sq[0]][sq[1]] !== ' ' && game[sq[0]][sq[1]] !== king).length === 1) ? true : false;
 		if (!toCheck) this.threats.push({pos: [squares[pieceIdx][0], squares[pieceIdx][1]], axis: targetIdx > pieceIdx ? range.slice(1) : range.slice(0, -1), fulfilled: isChess});
 		return isChess;
 	}
 
 	/**
 	 * Is king threaten => on axis of enemy figure axis (rook, bishop, queen) ?
-	 * @param pos king's position
 	 */
-	kingChess = (pos: PiecePos) => {
+	kingChess = () => {
 		this.threats = [];
 		this.rookChess(this.isWhite ? 'r' : 'R');
 		this.rookChess(this.isWhite ? 'q' : 'Q');
 		this.bishopChess(this.isWhite ? 'b' : 'B');
 		this.bishopChess(this.isWhite ? 'q' : 'Q');
+	}
+
+	/**
+	 * Add piece that check king to threats
+	 * @param pos piece position that check king
+	 */
+	addDirectThreat = (pos: number[]) => {
+		this.threats.push({pos, axis: [], fulfilled: true});
+		return true;
 	}
 
 	/**

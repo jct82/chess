@@ -1,24 +1,3 @@
-import { game } from './Models';
-
-let gameMap: game = toBoard('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR');
-
-/**
- * Squares contain space if empty or letter corresponding to piece type.
- * Uppercase for White, lowercase for black
- * @returns chessboard squares array of string
- */
-export function getGame() {
-	return gameMap;
-}
-
-/**
- * Update squares array game
- * @param game new chessboard squares array of string
- */
-export function setGame(game: game) {
-	gameMap = game.map(line => [...line.map(square => square.slice())]);
-}
-
 /**
  * Convert chess game from fen string to array characters array
  * @param fen string of characters corresponding to chessgame map

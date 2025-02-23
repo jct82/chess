@@ -1,6 +1,7 @@
 import {describe, expect} from '@jest/globals';
 import King from "@/pieces/figures/figureAxis/King";
-import { getGame, setGame } from '@/utils/fentoboard';
+import { getGame, setGame } from '@/utils/globals';
+import { game } from '@/utils/Models';
 
 describe('Axis figure', () => {
 	// Setup pieces
@@ -15,7 +16,6 @@ describe('Axis figure', () => {
 		[' ', ' ', 'B', ' ', ' ', ' ', ' ', ' '], // Row 6
 		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']  // Row 7
 	  ]);
-	  const game = getGame();
 	  king.checkMove();
 
 	it(`Should return allowed squares for king :
@@ -59,4 +59,40 @@ describe('Axis figure', () => {
 	it(`Is king in chess by a knight`, () => {
 		expect(king.bishopChess('n')).toBeFalsy();
 	});
-  });
+});
+
+describe('King figure', () => {
+	// Setup pieces
+	const king = new King({y:7, x:4}, true, false, [{y:7, x: 0}, {y:7, x: 7}]);
+	const castleGame = [
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 0
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 1
+		[' ', ' ', ' ', ' ', 'r', ' ', ' ', ' '], // Row 2
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 3
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 4
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 5
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 6
+		['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']  // Row 7
+	  ]
+	  const castleGame2 = [
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 0
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 1
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 2
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 3
+		[' ', ' ', ' ', ' ', ' ', 'b', ' ', ' '], // Row 4
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 5
+		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 6
+		['R', ' ', ' ', ' ', 'K', ' ', ' ', 'R']  // Row 7
+	  ]
+
+	it(`King shouldn't be able to castle`, () => {
+		expect(king.castle(castleGame).length === 0).toBeTruthy();
+	});
+
+	it(`King should be able to castle on the right `, () => {
+		const castlePositions = king.castle(castleGame2);
+		expect(castlePositions).toEqual(expect.arrayContaining([{y:7, x: 6}]));
+	});
+});
+
+

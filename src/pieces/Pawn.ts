@@ -1,5 +1,5 @@
 import { PiecePos, game } from '../utils/Models';
-import { getGame } from '@/utils/fentoboard';
+import { getGame, enPassant } from '@/utils/globals';
 import Piece from './Piece';
 /**
  * @param{PiecePos} pos - 
@@ -36,6 +36,18 @@ import Piece from './Piece';
 		if (this.validateMove(frontLeft)) allowedSquares.push({y:frontLeft.y, x:frontLeft.x});
 		const frontRight: PiecePos = {y:y + dir, x:x + 1};
 		if (this.validateMove(frontRight)) allowedSquares.push({y:frontRight.y, x:frontRight.x});
+		if (enPassant.is && enPassant.pos.y === y && Math.abs(enPassant.pos.x - x) === 1) allowedSquares.push(this.getEnPassant());
 		this.allowedSquares = allowedSquares;
+	}
+
+	/**
+	 * Add en passant position move to pawn allowed squares
+	 * @returns PiecePos position of en passant move
+	 */
+	getEnPassant = () => {
+		return {
+			y: enPassant.pos.y + (this.isWhite ? -1 : 1),
+			x: enPassant.pos.x
+		}
 	}
 }

@@ -1,5 +1,5 @@
 import { PiecePos, game } from '../utils/Models';
-import { getGame } from '@/utils/fentoboard';
+import { getGame } from '@/utils/globals';
 
 /**
  * @param{PiecePos} pos - 

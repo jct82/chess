@@ -1,4 +1,4 @@
-import { getGame } from '@/utils/fentoboard';
+import { getGame } from '@/utils/globals';
 import { PiecePos, game } from '../../../utils/Models';
 import FigureAxis from './FigureAxis';
 /**

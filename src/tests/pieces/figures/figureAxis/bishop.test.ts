@@ -1,6 +1,6 @@
 import {describe, expect} from '@jest/globals';
 import Bishop from "@/pieces/figures/figureAxis/Bishop";
-import { setGame } from '@/utils/fentoboard';
+import { setGame } from '@/utils/globals';
 
 describe('Bishop', () => {
 	// Setup pieces

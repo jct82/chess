@@ -1,17 +1,19 @@
 import {describe, expect, test} from '@jest/globals';
 import Pawn from "@/pieces/Pawn";
-import { setGame } from '@/utils/fentoboard';
+import { enPassant, setEnPassant, setGame } from '@/utils/globals';
 
 describe('Pawn', () => {
 	// Setup pieces
+	setEnPassant({is: true, pos: {y:3, x:6}});
 	const pawn = new Pawn({y:1, x:4}, false);	  
 	const whitePawn = new Pawn({ y: 6, x: 1 }, true);  // White pawn at y=6, x=1
 	const blackPawn = new Pawn({ y: 1, x: 1 }, false); // Black pawn at y=1, x=1
+	const enPassantPawn = new Pawn({ y: 3, x: 5 }, true); // Black pawn at y=3, x=5
 	setGame([
 		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 0
 		[' ', 'p', ' ', ' ', ' ', ' ', ' ', ' '], // Row 1
 		[' ', ' ', 'P', ' ', ' ', ' ', ' ', ' '], // Row 2
-		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 3
+		[' ', ' ', ' ', ' ', ' ', 'P', 'p', ' '], // Row 3
 		[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], // Row 4
 		['b', ' ', 'B', ' ', ' ', ' ', ' ', ' '], // Row 5
 		[' ', 'P', ' ', ' ', ' ', ' ', ' ', ' '], // Row 6 (White pawn start)
@@ -39,6 +41,11 @@ describe('Pawn', () => {
 	
 	test("can't move diagonal on free square", () => {
 		expect(pawn.validateMove({y:2, x:5})).toBeFalsy();
+	});
+
+	test("en passant move on y:6, x:2 should be proposed allow square", () => {
+		enPassantPawn.checkMove();
+		expect(enPassantPawn.allowedSquares).toEqual(expect.arrayContaining([{y: 2, x: 6}]));
 	});
   });
 

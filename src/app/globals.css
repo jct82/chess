@@ -84,17 +84,30 @@ body {
   color: #e5e7eb;
 }
 
+.pieces-board {
+  pointer-events: none;
+}
+
 .pieces-board .square {
   background-size: 54px 54px;
   background-position: center;
   background-repeat: no-repeat;
 }
 
-.pieces-board .square.point {
+.position-board {
+  opacity: 0;
+}
+
+.position-board.on {
+  opacity: 1;
+}
+
+.position-board .square.t {
   position: relative;
   background-color: hsla(176, 100%, 50%, 0.317);
 }
-.pieces-board .square.point:not(.r, .n, .b, .q, .k, .p, .R, .N, .B, .Q, .K, .P):before {
+
+.position-board .square.t:before {
   content: '';
   position: absolute;
   top: 0;
@@ -104,44 +117,44 @@ body {
   margin: auto;
   width: 5px;
   height: 5px;
-  border-radius: 5px;;
+  border-radius: 5px;
   background-color: hsl(214.26deg 100% 50%);
 }
 
-.square.r{
+.r{
   background-image: url('/chess_pieces/rook_black.png');
 }
-.square.R{
+.R{
   background-image: url('/chess_pieces/rook_white.png');
 }
-.square.n{
+.n{
   background-image: url('/chess_pieces/knight_black.png');
 }
-.square.N{
+.N{
   background-image: url('/chess_pieces/knight_white.png');
 }
-.square.b{
+.b{
   background-image: url('/chess_pieces/bishop_black.png');
 }
-.square.B{
+.B{
   background-image: url('/chess_pieces/bishop_white.png');
 }
-.square.k{
+.k{
   background-image: url('/chess_pieces/king_black.png');
 }
-.square.K{
+.K{
   background-image: url('/chess_pieces/king_white.png');
 }
-.square.q{
+.q{
   background-image: url('/chess_pieces/queen_black.png');
 }
-.square.Q{
+.Q{
   background-image: url('/chess_pieces/queen_white.png');
 }
-.square.p{
+.p{
   background-image: url('/chess_pieces/pawn_black.png');
 }
-.square.P{
+.P{
   background-image: url('/chess_pieces/pawn_white.png');
 }
 
@@ -156,3 +169,37 @@ body {
   z-index: 10;
   transform: translateY(-50%);
 }
+
+.course {
+    margin: 20px 10px;
+    max-width: 480px;
+}
+
+.course .round{
+  display: inline-block;
+  margin: 0 5px;
+  height: 18px;
+  line-height: 18px;
+  font-size: 14px;
+}
+
+.course .round .color{
+  display: inline-block;
+  padding-left: 20px;
+  background-repeat: no-repeat;
+  background-size: 20px;
+  background-position: left center; 
+}
+
+.course .round .color:nth-child(odd){
+  filter: opacity(0.3) drop-shadow(0 0 0 #eddc9a);
+}
+
+.course .round .color span{
+  display: inline-block;
+  width: 15px;
+  line-height: 18px;
+  font-size: 14px;
+  text-align: center;
+}
+
