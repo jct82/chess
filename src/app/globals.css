@@ -203,3 +203,64 @@ body {
   text-align: center;
 }
 
+.course .round .color .change {
+  width: auto;
+  padding-right: 20px;
+  padding-left: 3px;
+  background-repeat: no-repeat;
+  background-size: 20px;
+  background-position: right center; 
+}
+
+.transform{
+  position: absolute;
+  top: 25%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 25%;
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.transform.black{
+  background: rgba(255, 255, 255, 0.4);
+}
+
+.transform.white{
+  background: rgba(0, 0, 0, 0.3);
+}
+
+.transform .piece{
+  width: 15%;
+  margin: 0 2.5%;
+  height: 100%;
+  background-size: 80%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.transform.white .Queen{
+  background-image: url('/chess_pieces/queen_white.png');
+}
+.transform.black .Queen{
+  background-image: url('/chess_pieces/queen_black.png');
+}
+.transform.white .Knight{
+  background-image: url('/chess_pieces/knight_white.png');
+}
+.transform.black .Knight{
+  background-image: url('/chess_pieces/knight_black.png');
+}
+.transform.white .Bishop{
+  background-image: url('/chess_pieces/bishop_white.png');
+}
+.transform.black .Bishop{
+  background-image: url('/chess_pieces/bishop_black.png');
+}
+.transform.white .Rook{
+  background-image: url('/chess_pieces/rook_white.png');
+}
+.transform.black .Rook{
+  background-image: url('/chess_pieces/rook_black.png');
+}

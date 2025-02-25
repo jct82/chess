@@ -24,3 +24,13 @@ export interface Threat {
 }
 
 export type game = Array<string[]>;
+
+export const pieceTranslate: Record<string, string> = {
+	Pawn: 'p',
+	Rook: 'r',
+	Knight: 'n',
+	Bishop: 'b',
+	Queen: 'q',
+	King: 'k'
+}
+

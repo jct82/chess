@@ -34,10 +34,10 @@ export default class King extends FigureAxis {
             if (
                 this.rookChess(this.isWhite ? 'r' : 'R', km, true) ||
                 this.rookChess(this.isWhite ? 'q' : 'Q', km, true) ||
-                this.knightChess(km) ||
+                this.knightChess(km, true) ||
                 this.bishopChess(this.isWhite ? 'b' : 'B', km, true) ||
                 this.bishopChess(this.isWhite ? 'q' : 'Q', km, true) ||
-                this.pawnChess(km)
+                this.pawnChess(km, true)
             ) continue;
             this.allowedSquares.push(km);
         }
@@ -63,14 +63,19 @@ export default class King extends FigureAxis {
 			const freeChecked = fs.find(s => (
 				this.rookChess(this.isWhite ? 'r' : 'R', s, true) ||
 				this.rookChess(this.isWhite ? 'q' : 'Q', s, true) ||
-				this.knightChess(s) ||
+				this.knightChess(s, true) ||
 				this.bishopChess(this.isWhite ? 'b' : 'B', s, true) ||
 				this.bishopChess(this.isWhite ? 'q' : 'Q', s, true) ||
-				this.pawnChess(s)
+				this.pawnChess(s, true)
 			));
 			if (!!!freeChecked) castleSquares.push({y: this.pos.y, x: this.pos.x + (asc ? 2 : -2)});
 		};
 		return castleSquares;
+	}
+
+	initCastling = (pos: string) => {
+		if (pos.charAt(1) === '0') this.castling.pop();
+		if (pos.charAt(0) === '0') this.castling.shift();
 	}
 
 	/**
@@ -95,12 +100,12 @@ export default class King extends FigureAxis {
 	 * @param pos king's position / threatened position by pawn check
 	 * @returns boolean checked
 	 */
-	pawnChess = ({y, x} :PiecePos = {y: this.pos.y, x: this.pos.x}) => {
+	pawnChess = ({y, x} :PiecePos = {y: this.pos.y, x: this.pos.x}, toCheck:boolean = false) => {
 		const game: game = getGame();
         const dir = this.isWhite ? -1 : 1;
 		const piece = this.isWhite ? 'p' : 'P';
-		if (this.getSquare({y:y + dir, x:x - 1}) === piece) return this.addDirectThreat([y + dir, x - 1]);
-		if (this.getSquare({y:y + dir, x:x + 1}) === piece) return this.addDirectThreat([y + dir, x + 1]);
+		if (this.getSquare({y:y + dir, x:x - 1}) === piece) return toCheck ? true : this.addDirectThreat([y + dir, x - 1]);
+		if (this.getSquare({y:y + dir, x:x + 1}) === piece) return toCheck ? true : this.addDirectThreat([y + dir, x + 1]);
         return false
     }
 
@@ -109,17 +114,17 @@ export default class King extends FigureAxis {
 	 * @param pos king's position / threatened position by knight check
 	 * @returns boolean checked
 	 */
-	knightChess = ({y, x} :PiecePos = {y: this.pos.y, x: this.pos.x}) => {
+	knightChess = ({y, x} :PiecePos = {y: this.pos.y, x: this.pos.x}, toCheck:boolean = false) => {
 		const game: game = getGame();
 		const piece = this.isWhite ? 'n' : 'N';
-		if (this.getSquare({y:y - 1, x:x - 2}) === piece) return this.addDirectThreat([y - 1, x - 2]);
-		if (this.getSquare({y:y - 2, x:x - 2}) === piece) return this.addDirectThreat([y - 2, x - 2]);
-		if (this.getSquare({y:y - 2, x:x + 1}) === piece) return this.addDirectThreat([y - 2, x + 1]);
-		if (this.getSquare({y:y - 1, x:x + 2}) === piece) return this.addDirectThreat([y - 1, x + 2]);
-		if (this.getSquare({y:y + 1, x:x + 2}) === piece) return this.addDirectThreat([y + 1, x + 2]);
-		if (this.getSquare({y:y + 2, x:x + 1}) === piece) return this.addDirectThreat([y + 2, x + 1]);
-		if (this.getSquare({y:y + 2, x:x - 1}) === piece) return this.addDirectThreat([y + 2, x - 1]);
-		if (this.getSquare({y:y + 1, x:x - 2}) === piece) return this.addDirectThreat([y + 1, x - 2]);
+		if (this.getSquare({y:y - 1, x:x - 2}) === piece) return toCheck ? true : this.addDirectThreat([y - 1, x - 2]);
+		if (this.getSquare({y:y - 2, x:x - 2}) === piece) return toCheck ? true : this.addDirectThreat([y - 2, x - 2]);
+		if (this.getSquare({y:y - 2, x:x + 1}) === piece) return toCheck ? true : this.addDirectThreat([y - 2, x + 1]);
+		if (this.getSquare({y:y - 1, x:x + 2}) === piece) return toCheck ? true : this.addDirectThreat([y - 1, x + 2]);
+		if (this.getSquare({y:y + 1, x:x + 2}) === piece) return toCheck ? true : this.addDirectThreat([y + 1, x + 2]);
+		if (this.getSquare({y:y + 2, x:x + 1}) === piece) return toCheck ? true : this.addDirectThreat([y + 2, x + 1]);
+		if (this.getSquare({y:y + 2, x:x - 1}) === piece) return toCheck ? true : this.addDirectThreat([y + 2, x - 1]);
+		if (this.getSquare({y:y + 1, x:x - 2}) === piece) return toCheck ? true : this.addDirectThreat([y + 1, x - 2]);
         return false;
     }
 

@@ -1,4 +1,4 @@
-import { PiecePos, game, Threat } from '@/utils/Models';
+import { PiecePos, game, Threat, pieceTranslate } from '@/utils/Models';
 import { setGame, setEnPassant, enPassant } from '@/utils/globals';
 
 import Piece from '@/pieces/Piece';
@@ -8,6 +8,7 @@ import Bishop from '@/pieces/figures/figureAxis/Bishop';
 import Knight  from '@/pieces/figures/Knight';
 import Rook from '@/pieces/figures/figureAxis/Rook';
 import Pawn from '@/pieces/Pawn';
+import { games } from 'googleapis/build/src/apis/games';
 
 type players = {
     white: Piece[],
@@ -22,7 +23,18 @@ export default class Game {
 	pat: boolean;
 	white: Piece[];
 	black: Piece[];
-	constructor(squares: game, selected: Piece, whitePlayin: boolean, mat: boolean, pat: boolean) {
+	transform: boolean;
+	captureCount: number;
+	count: number;
+	constructor(
+		squares: game, 
+		selected: Piece, 
+		whitePlayin: boolean, 
+		mat: boolean, 
+		pat: boolean, 
+		captureCount = 0, 
+		count = 0
+		) {
 		this.squares = squares;
 		this.selected = selected;
 		this.whitePlayin = whitePlayin;
@@ -30,10 +42,11 @@ export default class Game {
 		this.pat = pat;
 		this.white = [];
 		this.black = [];
+		this.transform = false;
+		this.captureCount = captureCount;
+		this.count = count;
 		this.init();
 	}
-
-	// init = () => {this.setPlayers();}
 
 	/**
 	 * Set white and black players at first round
@@ -96,12 +109,13 @@ export default class Game {
 		// If chess threat piece moves, remove corresponding chess threat
 		king.removeThreat(this.squares[prevY][prevX].toUpperCase(), {y: prevY, x: prevX});
 		// Remove eaten piece and corresponding chess threat
+		this.captureCount++;
 		this.removeEaten(opponent, myKing, {y: newY, x: newX});
 		// Does piece's move fulfills check threat of another piece ?
 		const threatFulfilled = king.fulfillThreat({y:prevY, x: prevX});
 		if (this.selected instanceof Pawn) {
 			// convert pawn
-			if (newY === (this.whitePlayin ? 0 : 7)) this.pawnToQueen(player);
+			if (newY === (this.whitePlayin ? 0 : 7)) this.transform = true;
 			// en passant
 			if (enPassant.is) this.checkEnPassant(player, opponent, {y: newY, x: newX});
 			if (Math.abs(prevY - newY) === 2) setEnPassant({is: true, pos:{y: newY, x: newX}});
@@ -112,16 +126,27 @@ export default class Game {
 		this.squares[newY][newX] = this.squares[prevY][prevX];
 		this.squares[prevY][prevX] = ' ';
 		// Update moved piece position
-
 		this.updatePiecePos(player, {y: newY, x:newX});
-
 		setGame(this.squares);
-		if (this.selected instanceof King) this.selected.kingChess();
-		const isChess = king.checkChess({y:newY, x:newX});
+
+		this.selected instanceof King && this.selected.kingChess();
+		!this.transform && this.setNextRound(opponent, king, {y:newY, x:newX}, !!threatFulfilled);
+	}
+
+	/**
+	 * Set next round : allowed squares of opponent's pieces. Is there check, mat or pat?
+	 * @param opponent adversary player 
+	 * @param king adversary king
+	 * @param position of piece just moved 
+	 * @param threatFulfilled has last piece move freed axis for a piece to check opponent king
+	 */
+	setNextRound = (opponent: Piece[], king: King, {y, x}: PiecePos, threatFulfilled: boolean) => {
+		const isChess = king.checkChess({y:y, x:x});
 		(threatFulfilled || isChess) ?
 		this.mat = this.isMat(king, opponent) ? true : false :
 		this.pat = this.isPat(king, opponent) ? true : false ;
 		this.whitePlayin = !this.whitePlayin;
+		this.whitePlayin && this.count++;
 	}
 
 	/**
@@ -135,6 +160,7 @@ export default class Game {
 			if (`${p.pos.y}${p.pos.x}` === `${y}${x}`) {
 				player.splice(idx, 1);
 				king.removeThreat(this.squares[y][x].toUpperCase(), {y: y, x: x});
+				this.captureCount = 0;
 				return p;
 			}
 		}); 
@@ -146,14 +172,8 @@ export default class Game {
 	 * @param position arrival position of moved piece 
 	 */
 	updatePiecePos = (player: Piece[], {y, x}: PiecePos) => {
-		// console.log('______________');
-		// console.log('PLAYER', player);
-		// console.log('POSITION', {y, x});
-		// console.log('SELECTED', this.selected);
-		// console.log('______________');
 		player.find((p, idx) => {
 			if (`${p.pos.y}${p.pos.x}` === `${this.selected.pos.y}${this.selected.pos.x}`) {
-				// console.log('PIECE POS', player[idx]);
 				player[idx].pos = {y:y, x:x};
 				return p;
 			}
@@ -164,18 +184,32 @@ export default class Game {
 	 * Transform pawn arrived at the end of the chessboard to the piece of player's choice
 	 * @param player which player belongs the pawn about to transform in another piece
 	 */
-	pawnToQueen = (player: Piece[]) => {
-        const newQueen = new Queen({y: this.selected.pos.y, x: this.selected.pos.x}, this.selected.isWhite);
+	pawnToPiece = (player: Piece[], pieceType: string) => {
+		const newFigure = this.setNewFigure(pieceType)!;
         player.find((p, idx) => {
             if (`${p.pos.y}${p.pos.x}` === `${this.selected.pos.y}${this.selected.pos.x}`) {
                 player.splice(idx, 1);
                 return p;
             }
         });
-        player.push(newQueen);
-        this.selected = newQueen;
-        this.squares[this.selected.pos.y][this.selected.pos.x] = this.whitePlayin ? 'Q' : 'q';
+        player.push(newFigure);
+        this.selected = newFigure;
+        this.squares[this.selected.pos.y][this.selected.pos.x] = this.whitePlayin ? pieceTranslate[pieceType].toUpperCase() : pieceTranslate[pieceType];
+		setGame(this.squares);
+		this.transform = false;
     }
+
+	/**
+	 * Transform the pawn in desired piece
+	 * @param pieceType selected of newly transformed pawn
+	 * @returns Piece object required
+	 */
+	setNewFigure = (pieceType: String) => {
+		if (pieceType === 'Queen') return new Queen({y: this.selected.pos.y, x: this.selected.pos.x}, this.selected.isWhite);
+		if (pieceType === 'Knight') return new Knight({y: this.selected.pos.y, x: this.selected.pos.x}, this.selected.isWhite);
+		if (pieceType === 'Bishop') return new Bishop({y: this.selected.pos.y, x: this.selected.pos.x}, this.selected.isWhite);
+		if (pieceType === 'Rook') return new Rook({y: this.selected.pos.y, x: this.selected.pos.x}, this.selected.isWhite);
+	}
 
 	/**
 	 * Eat opponent pawn, performing en passant move

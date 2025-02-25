@@ -1,7 +1,7 @@
 'use client'
 import { memo, useEffect, useState } from 'react';
-import { getGame, setGame } from '@/utils/globals';
-import { courseToJSX } from '@/utils/writePos';
+import { getGame, setGame, setEnPassant, parseCastles } from '@/utils/globals';
+import { fenToGame } from '@/utils/fentoboard';
 
 import Game from '@/Game';
 import Piece from '@/pieces/Piece';
@@ -10,11 +10,16 @@ import King from '@/pieces/figures/figureAxis/King';
 import ChessBoard from '@/components/ChessBoard';
 import PiecesBoard from '@/components/PiecesBoard';
 import PositionBoard from '@/components/PositionBoard';
+import TransformStripe from '@/components/TransformStripe';
+import WritePos from '@/components/WritePos';
 
 let currentPosDown: number[] = [0, 0];
 let currentPosUp: number[] = [0, 0];
 let clickedInBoard = false;
-let game: Game = new Game(getGame(), {} as Piece, true, false, false);
+const {squares, color, castles, enPassant, lastHit, moves} = fenToGame('rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 0');
+let game: Game = new Game(squares, {} as Piece, color, false, false, lastHit, moves);
+if (enPassant !== '-') setEnPassant({is: true, pos:{y:Number(enPassant.charAt(1)), x:Number(enPassant.charCodeAt(1)) - 97}});
+const newCastles = parseCastles(castles);
 
 export default function AddBoard() {
     const [gameCourse, setgameCourse] = useState<string>('');
@@ -24,8 +29,12 @@ export default function AddBoard() {
 	const unit = 500 / 8;
 
     useEffect(() => {
-        game.isPat((player.find(p => p instanceof King) as King), player);
-        game.isPat((opponent.find(p => p instanceof King) as King), opponent);
+        const myKing = player.find(p => p instanceof King) as King;
+        const king = opponent.find(p => p instanceof King) as King;
+        myKing.initCastling(newCastles[0]);
+        king.initCastling(newCastles[1]);
+        game.isPat(myKing, player);
+        game.isPat(king, opponent);
 	}, []);
 
     /**
@@ -50,9 +59,9 @@ export default function AddBoard() {
         clickedInBoard = false;
 	}
     
-    // async function getNextMove(formData: FormData, url = 'https://stockfish.online/api/s/v2.php', conf = 'rn1q1rk1/pp2b1pp/2p2n2/3p1pB1/3P4/1QP2N2/PP1N1PPP/R4RK1 b - - 1 11') {
-    //     'use server'
-    //     fetch(`${url}?fen=${conf}&depth=12`).then(response => response.json()).then(response => console.log('OOOOOOOOOOOOO', response));
+    // getNextMove();
+    // async function getNextMove(url = 'https://stockfish.online/api/s/v2.php', conf = 'rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR b KQkq - 0 0', depth = 2) {
+    //     fetch(`${url}?fen=${conf}&depth=${depth}`).then(response => response.json()).then(response => console.log('OOOOOOOOOOOOO', response));
     // }
 
     /**
@@ -77,6 +86,20 @@ export default function AddBoard() {
             setgameCourse(gameCourse + `${gameCourse.length > 0 ? '_' : ''}${game.selected.constructor.name}.${currentPosDown[1]}${currentPosDown[0]}-${newY}${newX}`);
         }
     }
+
+    /**
+     * Transform pawn arrived on last line in piece type selected 
+     * @param e  mouseClick event
+     */
+    const transformPawn = (e: React.MouseEvent<Element, MouseEvent>) => {
+        const pieceType: string = Array.from((e.target as HTMLInputElement).classList).filter(c => (c!== 'piece'))[0];
+        const king = opponent.find(p => p instanceof King) as King;
+        const oldPos = {y: Number(gameCourse.slice(-4, -3)), x:Number(gameCourse.slice(-5, -4))};
+        const newPos = {y: Number(gameCourse.slice(-2, -1)), x:Number(gameCourse.slice(-1))};
+        game.pawnToPiece(player, pieceType);
+        game.setNextRound(opponent, king, newPos, !!king.fulfillThreat(oldPos));
+        setgameCourse(gameCourse + `=${pieceType}`);
+    }
     
     return(
         <>
@@ -92,8 +115,9 @@ export default function AddBoard() {
                 PAT
                 <div>Match nul</div>
             </div>}
+            {game.transform && <TransformStripe colorWhite={game.whitePlayin} selectPiece={transformPawn}/>}
         </div>
-        <div className="course">{courseToJSX(gameCourse)}</div>
+        {gameCourse.length > 0 && <WritePos course={gameCourse} />}
         </>
     )
 }
